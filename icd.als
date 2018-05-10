@@ -1,6 +1,7 @@
 // ===========================================================================
 // SWEN90010 2018 - Assignment 3 Submission
-// by <PUT YOUR NAMES HERE>
+// by <Risheng Fang 749481
+//     Yuchao Chen  767394>
 // ===========================================================================
 
 module ebs
@@ -89,6 +90,8 @@ pred Init[s : State] {
   s.last_action = DummyInitialAction
 }
 
+run Init for 2
+
 // =========================== Actions =======================================
 
 // Models the action in which a ModeOn message is sent on the network by the
@@ -112,38 +115,71 @@ pred send_mode_on[s, s' : State] {
 // Models the action in which a valid ModeOn message is received by the
 // ICD from the authorised cardiologist, causing the ICD system's mode to change 
 // from Off to On and the message to be removed from the network
-// Precondition: <FILL IN HERE>               
-// Postcondition: <FILL IN HERE>
+// Precondition: the network now contains a ModeOn message from the authorised 
+//               cardiologist
+//               last_action is SendModeOn for the message's sender
+//               the current icd_mode and impulse_mode is Modeoff
+// Postcondition: the current icd_mode and impulse_mode is set as ModeOn
 //                last_action in RecvModeOn and 
 //                last_action.who = the source of the ModeOn message
 //                and nothing else changes
 pred recv_mode_on[s, s' : State] {
-  // <FILL IN HERE>
+  s.network in ModeOnMessage && 
+  s.network.source.roles in Cardiologist && 
+  s.icd_mode in ModeOff && 
+  s.impulse_mode in ModeOff |
+  s'.icd_mode = ModeOn &&
+  s'.impulse_mode = ModeOn &&
+  no s'.network &&
+  s'.joules_to_deliver = s.joules_to_deliver &&
+  s'.authorised_card = s.authorised_card &&
+  s'.last_action in RecvModeOn &&
+  s'.last_action.who = s.network.source
 }
 
 // Models the action in which a valid ChangeSettingsRequest message is sent
 // on the network, from the authorised cardiologist, specifying the new quantity of 
 // joules to deliver for ventrical fibrillation.
-// Precondition: <FILL IN HERE>
-// Postcondition: <FILL IN HERE>
+// Precondition: the message is sent by the authorised cardiologist
+// Postcondition: network now contains a ChangeSettings message from the authorised 
+//                cardiologist
 //                last_action in SendChangeSettings and
 //                last_action.who = the source of the ChangeSettingsMessage
 //                and nothing else changes
 pred send_change_settings[s, s' : State] {
-  // <FILL IN HERE>
+  some m : ChangeSettingsMessage |
+  m.source = s.authorised_card &&
+  s'.network = s.network + m &&
+  s'.icd_mode = s.icd_mode &&
+  s'.impulse_mode = s.impulse_mode &&
+  s'.joules_to_deliver = s.joules_to_deliver &&
+  s'.authorised_card = s.authorised_card &&
+  s'.last_action in SendChangeSettings &&
+  s'.last_action.who = m.source
 }
 
 // Models the action in which a valid ChangeSettingsRequest message is received
 // by the ICD, from the authorised cardiologist, causing the current joules to be 
 // updated to that contained in the message and the message to be removed from the 
 // network.
-// Precondition: <FILL IN HERE>
-// Postcondition: <FILL IN HERE>
+// Precondition: the current icd_mode and impulse_mode is set as ModeOff
+//               the network now contains a ChangeSettings message from the authorised 
+//               cardiologist
+// Postcondition: joules to deliver is set as the given value
 //                last_action in RecvChangeSettings and
 //                last_action.who = the source of the ChangeSettingsMessage
 //                and nothing else changes
 pred recv_change_settings[s, s' : State] {
-  // <FILL IN HERE>
+  s.icd_mode in ModeOff && 
+  s.impulse_mode in ModeOff && 
+  s.network in ChangeSettingsMessage &&
+  s.network.source.roles in Cardiologist |
+  s'.joules_to_deliver=m.joules_to_deliver &&
+  no s'.network &&
+  s'.icd_mode = s.icd_mode &&
+  s'.impulse_mode = s.impulse_mode &&
+  s'.last_action in RecvChangeSettings &&
+  s'.last_action.who = s.network.source
 }
 
 // =========================== Attacker Actions ==============================
