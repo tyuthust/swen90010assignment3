@@ -126,7 +126,7 @@ pred send_mode_on[s, s' : State] {
 pred recv_mode_on[s, s' : State] {
   // s.last_action =  SendModeOn  and
   s.network in ModeOnMessage and
-  s.network.source = Cardiologist and
+  s.network.source.roles = Cardiologist and
   s.icd_mode in ModeOff and
   s.impulse_mode in ModeOff and
   s'.icd_mode = ModeOn and
@@ -177,7 +177,7 @@ pred recv_change_settings[s, s' : State] {
   s.icd_mode in ModeOff and 
   s.impulse_mode in ModeOff and
   s.network in ChangeSettingsMessage and
-  s.network.source in Cardiologist and
+  s.network.source.roles in Cardiologist and
   s'.joules_to_deliver=s.network.joules_to_deliver and
   no s'.network and
   s'.icd_mode = s.icd_mode and
@@ -199,15 +199,18 @@ pred recv_change_settings[s, s' : State] {
 // When doing so, ensure you update the following line that describes the
 // attacker's abilities.
 //
-// Attacker's abilities: can impersonate the authorised cardiologist
-//                       <UPDATE HERE>
+// Attacker's abilities: alter the contents of messages on the network
+//                       can impersonate the authorised cardiologist and
+//                       sending a new message whose source field names the authorised cardiologist
 //                       
 // Precondition: none
 // Postcondition: network state changes in accordance with attacker's abilities
 //                last_action is AttackerAction
 //                and nothing else changes
 pred attacker_action[s, s' : State] {
-  
+  (some m:Message | m.source = s.authorised_card and 
+  m.source.roles in Cardiologist and
+  s'.network = s.network + m) and
   s'.icd_mode = s.icd_mode and
   s'.joules_to_deliver = s.joules_to_deliver and
   s'.impulse_mode = s.impulse_mode and
