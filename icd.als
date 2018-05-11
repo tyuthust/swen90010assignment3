@@ -124,7 +124,7 @@ pred send_mode_on[s, s' : State] {
 //                last_action.who = the source of the ModeOn message
 //                and nothing else changes
 pred recv_mode_on[s, s' : State] {
-  s.last_action =  SendModeOn  and
+  // s.last_action =  SendModeOn  and
   s.network in ModeOnMessage and
   s.network.source.roles in Cardiologist and
   s.icd_mode in ModeOff and
@@ -269,7 +269,7 @@ check icd_never_off_after_on for 10 expect 0
 // This condition should be true in all states of the system, 
 // i.e. it should be an "invariant"
 pred inv[s : State] {
-  s.icd_mode = ModeOn implies s.impulse_mode = ModeOn
+  (s.icd_mode = ModeOn) implies (s.impulse_mode = ModeOn)
 }
 
 // Specifies that the invariant "inv" above should be true in all states
@@ -286,29 +286,30 @@ assert inv_always {
 // Check that the invariant is never violated during 15
 // state transitions
 check inv_always for 15
-// <FILL IN HERE: does the assertion hold? why / why not?>
-// NOTE: you will want to use smaller thresholds if getting
-//       counterexamples, so you can interpret them
-
-// The assert always hold since the icd mode is turned on only when impulse generator is on in
-// 'recv_mode_on' predicate. 
-// Even if there can be AttackerAction, the assert should hold.
-// Because the reduced AttackerAction can only repeat 
-// the previous message but not generating a new one,
-// there will not be message to turn the impulse generator off while leaving icd on.
+// The assert always hold even with the 30 scope since the icd mode is turned on only 
+// when impulse generator is on in 'recv_mode_on' predicate. 
+// Even if there is AttackerAction, the assert still holds.
+// Because the initial AttackerAction can only modify the content of network 
+// but not change the information of the system, 
+// such as icd_mode and impulse generator mode directly.
+// In this way, the Rev_On_Pred can ignore the network content when it does not 
+// equal the valid message.
+// As a result, there will not be any message to turn the impulse generator off 
+// while leaving icd on.
 
 
 // An unexplained assertion. You need to describe the meaning of this assertion
-// in the comment <FILL IN HERE>
-// If the last_action does not belong to RecvChangeSettings, the Paitent should be in s.last_action.who.roles
+// Specifies that when there is not any attacker action in the model, 
+// the roles of the who of the RecvChangeSettings action should not be Paitent
 assert unexplained_assertion {
   all s : State | (all s' : State | s'.last_action not in AttackerAction) =>
       s.last_action in RecvChangeSettings =>
       Patient not in s.last_action.who.roles
 }
 
-check unexplained_assertion for 15
-// <FILL IN HERE: does the assertion hold? why / why not?>
+check unexplained_assertion for 5
+// The assert always hold even with the 15 scope since when there is no attaker action,
+// the recv_change_settings method will never allow that the s.network.source.roles is Patient
 
 // Check that the device turns on only after properly instructed to
 // i.e. that the RecvModeOn action occurs only after a SendModeOn action has occurred
