@@ -90,7 +90,7 @@ pred Init[s : State] {
   s.last_action = DummyInitialAction
 }
 
-run Init for 2
+//run Init for 2
 
 // =========================== Actions =======================================
 
@@ -124,16 +124,16 @@ pred send_mode_on[s, s' : State] {
 //                last_action.who = the source of the ModeOn message
 //                and nothing else changes
 pred recv_mode_on[s, s' : State] {
-  s.network in ModeOnMessage && 
-  s.network.source.roles in Cardiologist && 
-  s.icd_mode in ModeOff && 
-  s.impulse_mode in ModeOff |
-  s'.icd_mode = ModeOn &&
-  s'.impulse_mode = ModeOn &&
-  no s'.network &&
-  s'.joules_to_deliver = s.joules_to_deliver &&
-  s'.authorised_card = s.authorised_card &&
-  s'.last_action in RecvModeOn &&
+  s.network in ModeOnMessage and
+  s.network.source.roles in Cardiologist and
+  s.icd_mode in ModeOff and
+  s.impulse_mode in ModeOff and
+  s'.icd_mode = ModeOn and
+  s'.impulse_mode = ModeOn and
+  no s'.network and
+  s'.joules_to_deliver = s.joules_to_deliver and
+  s'.authorised_card = s.authorised_card and
+  s'.last_action in RecvModeOn and
   s'.last_action.who = s.network.source
 }
 
@@ -148,13 +148,13 @@ pred recv_mode_on[s, s' : State] {
 //                and nothing else changes
 pred send_change_settings[s, s' : State] {
   some m : ChangeSettingsMessage |
-  m.source = s.authorised_card &&
-  s'.network = s.network + m &&
-  s'.icd_mode = s.icd_mode &&
-  s'.impulse_mode = s.impulse_mode &&
-  s'.joules_to_deliver = s.joules_to_deliver &&
-  s'.authorised_card = s.authorised_card &&
-  s'.last_action in SendChangeSettings &&
+  m.source = s.authorised_card and
+  s'.network = s.network + m and
+  s'.icd_mode = s.icd_mode and
+  s'.impulse_mode = s.impulse_mode and
+  s'.joules_to_deliver = s.joules_to_deliver and
+  s'.authorised_card = s.authorised_card and
+  s'.last_action in SendChangeSettings and
   s'.last_action.who = m.source
 }
 
@@ -170,15 +170,15 @@ pred send_change_settings[s, s' : State] {
 //                last_action.who = the source of the ChangeSettingsMessage
 //                and nothing else changes
 pred recv_change_settings[s, s' : State] {
-  s.icd_mode in ModeOff && 
-  s.impulse_mode in ModeOff && 
-  s.network in ChangeSettingsMessage &&
-  s.network.source.roles in Cardiologist |
-  s'.joules_to_deliver=m.joules_to_deliver &&
-  no s'.network &&
-  s'.icd_mode = s.icd_mode &&
-  s'.impulse_mode = s.impulse_mode &&
-  s'.last_action in RecvChangeSettings &&
+  s.icd_mode in ModeOff and 
+  s.impulse_mode in ModeOff and
+  s.network in ChangeSettingsMessage and
+  s.network.source.roles in Cardiologist and
+  s'.joules_to_deliver=s.network.joules_to_deliver and
+  no s'.network and
+  s'.icd_mode = s.icd_mode and
+  s'.impulse_mode = s.impulse_mode and
+  s'.last_action in RecvChangeSettings and
   s'.last_action.who = s.network.source
 }
 
