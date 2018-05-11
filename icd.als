@@ -144,6 +144,7 @@ pred recv_mode_on[s, s' : State] {
 // Precondition: none
 // Postcondition: network now contains a ChangeSettings message from the authorised 
 //                cardiologist
+//                and the joulse_to_deliver is set as a given value
 //                last_action in SendChangeSettings and
 //                last_action.who = the source of the ChangeSettingsMessage
 //                and nothing else changes
@@ -166,6 +167,7 @@ pred send_change_settings[s, s' : State] {
 // Precondition: the current icd_mode and impulse_mode is set as ModeOff
 //               the network now contains a ChangeSettings message from the authorised 
 //               cardiologist
+//               last_action SendChangeSettings
 // Postcondition: joules to deliver is set as the given value
 //                last_action in RecvChangeSettings and
 //                last_action.who = the source of the ChangeSettingsMessage
@@ -243,8 +245,8 @@ fact init_state {
   }
 }
 
-run { last.icd_mode=ModeOn} for exactly 8 State, 2 Joules, 4 Action, 1 Principal, 2 Message
-run { last.last_action=RecvChangeSettings} for exactly 5 State, 2 Joules, 4 Action, 1 Principal, 2 Message
+// run { last.icd_mode=ModeOn} for exactly 8 State, 2 Joules, 4 Action, 1 Principal, 2 Message
+// run { last.last_action=RecvChangeSettings} for exactly 5 State, 2 Joules, 4 Action, 1 Principal, 2 Message
 
 // =========================== Properties ====================================
 
@@ -267,7 +269,7 @@ check icd_never_off_after_on for 10 expect 0
 // This condition should be true in all states of the system, 
 // i.e. it should be an "invariant"
 pred inv[s : State] {
-  // <FILL IN HERE>
+  s.icd_mode = ModeOn implies s.impulse_mode = ModeOn
 }
 
 // Specifies that the invariant "inv" above should be true in all states
@@ -288,15 +290,24 @@ check inv_always for 15
 // NOTE: you will want to use smaller thresholds if getting
 //       counterexamples, so you can interpret them
 
+// The assert always hold since the icd mode is turned on only when impulse generator is on in
+// 'recv_mode_on' predicate. 
+// Even if there can be AttackerAction, the assert should hold.
+// Because the reduced AttackerAction can only repeat 
+// the previous message but not generating a new one,
+// there will not be message to turn the impulse generator off while leaving icd on.
+
+
 // An unexplained assertion. You need to describe the meaning of this assertion
 // in the comment <FILL IN HERE>
+// If the last_action does not belong to RecvChangeSettings, the Paitent should be in s.last_action.who.roles
 assert unexplained_assertion {
   all s : State | (all s' : State | s'.last_action not in AttackerAction) =>
       s.last_action in RecvChangeSettings =>
       Patient not in s.last_action.who.roles
 }
 
-check unexplained_assertion for 5
+check unexplained_assertion for 15
 // <FILL IN HERE: does the assertion hold? why / why not?>
 
 // Check that the device turns on only after properly instructed to
