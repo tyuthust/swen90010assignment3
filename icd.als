@@ -208,14 +208,19 @@ pred recv_change_settings[s, s' : State] {
 //                last_action is AttackerAction
 //                and nothing else changes
 pred attacker_action[s, s' : State] {
-  (some m:Message | m.source = s.authorised_card and 
+  ((some m:Message | m.source = s.authorised_card and 
   m.source.roles in Cardiologist and
-  s'.network = s.network + m) and
+  s'.network = s.network + m) or 
+  (some j:Joules | s.network.joules_to_deliver = j and 
+  s'.network =s.network) or 
+  (some p:Patient | s.network.source.roles = p and 
+  s'.network = s.network)) and
   s'.icd_mode = s.icd_mode and
   s'.joules_to_deliver = s.joules_to_deliver and
   s'.impulse_mode = s.impulse_mode and
   s'.authorised_card = s.authorised_card and
-  s'.last_action = AttackerAction
+  s'.last_action = AttackerAction and
+  s'.last_action.who = s.network.source
 }
 
 
@@ -249,7 +254,7 @@ fact init_state {
   }
 }
 
-// run { last.icd_mode=ModeOn} for exactly 8 State, 2 Joules, 4 Action, 1 Principal, 2 Message
+run { last.icd_mode=ModeOn} for exactly 8 State, 2 Joules, 4 Action, 1 Principal, 2 Message
 // run { last.last_action=RecvChangeSettings} for exactly 5 State, 2 Joules, 4 Action, 1 Principal, 2 Message
 
 // =========================== Properties ====================================
