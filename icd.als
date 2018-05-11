@@ -126,7 +126,7 @@ pred send_mode_on[s, s' : State] {
 pred recv_mode_on[s, s' : State] {
   // s.last_action =  SendModeOn  and
   s.network in ModeOnMessage and
-  s.network.source.roles in Cardiologist and
+  s.network.source = Cardiologist and
   s.icd_mode in ModeOff and
   s.impulse_mode in ModeOff and
   s'.icd_mode = ModeOn and
@@ -177,7 +177,7 @@ pred recv_change_settings[s, s' : State] {
   s.icd_mode in ModeOff and 
   s.impulse_mode in ModeOff and
   s.network in ChangeSettingsMessage and
-  s.network.source.roles in Cardiologist and
+  s.network.source in Cardiologist and
   s'.joules_to_deliver=s.network.joules_to_deliver and
   no s'.network and
   s'.icd_mode = s.icd_mode and
@@ -194,19 +194,20 @@ pred recv_change_settings[s, s' : State] {
 //
 // NOTE: In the initial template you are given, the attacker
 // is modelled as being able to modify the network contents arbitrarily.
-// Howeever, for later parts of the assignment you will change this definition
+// However, for later parts of the assignment you will change this definition
 // to only permit certain kinds of modifications to the state of the network.
 // When doing so, ensure you update the following line that describes the
 // attacker's abilities.
 //
-// Attacker's abilities: can modify network contents arbitrarily
+// Attacker's abilities: can impersonate the authorised cardiologist
 //                       <UPDATE HERE>
-//
+//                       
 // Precondition: none
 // Postcondition: network state changes in accordance with attacker's abilities
 //                last_action is AttackerAction
 //                and nothing else changes
 pred attacker_action[s, s' : State] {
+  
   s'.icd_mode = s.icd_mode and
   s'.joules_to_deliver = s.joules_to_deliver and
   s'.impulse_mode = s.impulse_mode and
@@ -308,7 +309,7 @@ assert unexplained_assertion {
 }
 
 check unexplained_assertion for 5
-// The assert always hold even with the 15 scope since when there is no attaker action,
+// The assert always hold when the scope even if the scope is 15, so the model fails above assert check.
 // the recv_change_settings method will never allow that the s.network.source.roles is Patient
 
 // Check that the device turns on only after properly instructed to
