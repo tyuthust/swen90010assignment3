@@ -124,6 +124,7 @@ pred send_mode_on[s, s' : State] {
 //                last_action.who = the source of the ModeOn message
 //                and nothing else changes
 pred recv_mode_on[s, s' : State] {
+  s.last_action =  SendModeOn  and
   s.network in ModeOnMessage and
   s.network.source.roles in Cardiologist and
   s.icd_mode in ModeOff and
@@ -140,15 +141,15 @@ pred recv_mode_on[s, s' : State] {
 // Models the action in which a valid ChangeSettingsRequest message is sent
 // on the network, from the authorised cardiologist, specifying the new quantity of 
 // joules to deliver for ventrical fibrillation.
-// Precondition: the message is sent by the authorised cardiologist
+// Precondition: none
 // Postcondition: network now contains a ChangeSettings message from the authorised 
 //                cardiologist
 //                last_action in SendChangeSettings and
 //                last_action.who = the source of the ChangeSettingsMessage
 //                and nothing else changes
 pred send_change_settings[s, s' : State] {
-  some m : ChangeSettingsMessage |
-  m.source = s.authorised_card and
+  some m : ChangeSettingsMessage | m.source = s.authorised_card and 
+  m.joules_to_deliver = (Joules-InitialJoulesToDeliver) and
   s'.network = s.network + m and
   s'.icd_mode = s.icd_mode and
   s'.impulse_mode = s.impulse_mode and
@@ -170,6 +171,7 @@ pred send_change_settings[s, s' : State] {
 //                last_action.who = the source of the ChangeSettingsMessage
 //                and nothing else changes
 pred recv_change_settings[s, s' : State] {
+  s.last_action = SendChangeSettings and
   s.icd_mode in ModeOff and 
   s.impulse_mode in ModeOff and
   s.network in ChangeSettingsMessage and
@@ -240,6 +242,9 @@ fact init_state {
     Init[s]
   }
 }
+
+run { last.icd_mode=ModeOn} for exactly 8 State, 2 Joules, 4 Action, 1 Principal, 2 Message
+run { last.last_action=RecvChangeSettings} for exactly 5 State, 2 Joules, 4 Action, 1 Principal, 2 Message
 
 // =========================== Properties ====================================
 
