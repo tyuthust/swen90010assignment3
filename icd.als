@@ -200,14 +200,13 @@ pred recv_change_settings[s, s' : State] {
 // attacker's abilities.
 //
 // Attacker's abilities: delete the message network the network
-//                       alter the source of messages on the network
-//                       alter the joules_to_deliver of the message on th network                   
+//                       alter the content of the message on th network                   
 // Precondition: none
 // Postcondition: network state changes in accordance with attacker's abilities
 //                last_action is AttackerAction
 //                and nothing else changes
 pred attacker_action[s, s' : State] {
-  ((one s.network and no s'.network) or (s.network in ChangeSettingsMessage and s'.network.source = s.network.source)) and
+  ((one s.network and no s'.network) or (one s.network and s'.network.source = s.network.source)) and
   s'.icd_mode = s.icd_mode and
   s'.joules_to_deliver = s.joules_to_deliver and
   s'.impulse_mode = s.impulse_mode and
