@@ -144,7 +144,7 @@ pred recv_mode_on[s, s' : State] {
 // Precondition: none
 // Postcondition: network now contains a ChangeSettings message from the authorised 
 //                cardiologist
-//                and the joulse_to_deliver is set as a given value
+//                and the joules_to_deliver is set as a given value
 //                last_action in SendChangeSettings and
 //                last_action.who = the source of the ChangeSettingsMessage
 //                and nothing else changes
@@ -199,14 +199,22 @@ pred recv_change_settings[s, s' : State] {
 // When doing so, ensure you update the following line that describes the
 // attacker's abilities.
 //
-// Attacker's abilities: delete the message network the network
-//                       alter the content of the message on th network                   
+// Attacker's abilities: 1.delete the message network the network
+//                       2.interfere the network by sending an unauthorized message
+//                       3.repeat all previous messages
+//                       4.modify the joules if the message is send joules message
+
 // Precondition: none
 // Postcondition: network state changes in accordance with attacker's abilities
 //                last_action is AttackerAction
 //                and nothing else changes
 pred attacker_action[s, s' : State] {
-  ((one s.network and no s'.network) or (one s.network and s'.network.source = s.network.source)) and
+  (
+   (one s.network and no s'.network) 
+    or (some m : Message {(m.source not in s.authorised_card and s'.network = m)}) 
+    or (all previous : ord/prev[s'] | s'.network = previous.network) 
+    or  (some j : Joules{s.network.joules_to_deliver = j and s'.network = s.network})
+  ) and
   s'.icd_mode = s.icd_mode and
   s'.joules_to_deliver = s.joules_to_deliver and
   s'.impulse_mode = s.impulse_mode and
@@ -316,20 +324,129 @@ check unexplained_assertion for 5
 // Check that the device turns on only after properly instructed to
 // i.e. that the RecvModeOn action occurs only after a SendModeOn action has occurred
 assert turns_on_safe {
-  // <FILL IN HERE>
+  // For all State s and s' if s and s' form pred recv_mode_on
+  // it should be that previous state of s and s form pred send_mode_on
+  all s,s' : State|
+  recv_mode_on[s,s']=>send_mode_on[ord/prev[s],s]
 }
 
 // NOTE: you may want to adjust these thresholds for your own use
 check turns_on_safe for 5 but 8 State
-// <FILL IN HERE: does the assertion hold in the updated attacker model in which
-// the attacker cannot guess Principal ids? why / why not?>
-// what additional restrictions need to be added to the attacker model?
 
+// assert change_setting_safe {
+//   all s,s' : State|
+//     (recv_change_settings[s,s'] and attacker_action[ord/prev[s],s]) => 
+//     s'.joules_to_deliver = s.joules_to_deliver
+// }
+// check change_setting_safe for 5 but 8 State
+
+
+
+// assert attack_detect
+
+// <Question: does the assertion hold in the updated attacker model in which
+// the attacker cannot guess Principal ids? why / why not?>
+// No, the attacker can delete a message which is send_mode_on message and 
+// repeat the message in the future period which is not send_mode_on
+// that is  
+// send_mode_on -> network
+// ||
+// \/
+// attacker delete message
+// ||
+// \/
+// ...
+// ||
+// \/
+// other non send_mode_on -> network
+// ||
+// \/
+// attacker repeat the previous message of send_mode_on ->network
+// ||
+// \/
+// network -> receive_mode_on
+
+
+
+// what additional restrictions need to be added to the attacker model?
+// any message modified by the attacker will not contain the authorised_cards
+//
+//
 // Attacks still permitted by the updated attacker model:
-// 
-// <FILL IN HERE>
+// Attack 3: repeat all previous messages
+// Attack of repeating some previous messages may not be detected,
+// especially those mode_on message which are deleted by attacker,
+// or repeating those change setting message after a new change setting message
+// has sent to the network and been received.
+//
+// Attack 4: modify the joules if the message is send joules message
+// ICD has no aware of the original joules which the authorised_cards set
+// thus, any attack of modifying jourles can not be detected and avoid.
 
 
 // Relationship to our HAZOP study:
 //
-// <FILL IN HERE>
+// (a)Which of these attacks are covered by hazards that you identified?
+// 1.delete the message network the network
+// This is covered in the previously assignment
+// ID= 2.2, 5.2 6.2 ...
+// we've suggest that to solve this kind of attacks,
+// any request sent to the ICD should pair with response and
+// import repeating machanism of sending message
+//
+// 2.interfere the network by sending an unauthorized message
+// This is also coverd.
+// ID = 1.2
+// We've suggest to import machanism of authorisation and 
+// authentication to ensure that the message is securied
+//
+// 3.repeat all previous messages
+// The attack is NOT directly covered. But the solution of the attack
+// can be similar to the one with
+// ID = 2.5
+// which is mark every sending message with count
+// so that any previous message repeating will be ignored 
+// since the current message count is greater
+// 
+// 4.modify the joules if the message is send joules message
+// The attack is totally NOT covered.
+//
+//
+// (b) Any new hazards suggested by these attacks, 
+// including the design item that each
+// applies to and an appropriate HAZOP guideword for each.
+//
+//
+// Design item 1:
+// In the off mode, when an authorised Cardiologist sends a
+// change setting request, the ICD system should reset 
+// the value of upper bound for tachycardia or the number
+// of joules delivered and return the corresponding 
+// ChangeSettingResponse.  
+//
+// Guide Word - PART OF
+// Deviation: The change setting request is received but
+// the joules set is not the original one
+// Possible Cause: the message is modified by the attacker
+//
+// Guide Word - LATE
+// Deviation: The ICD receives the changeSetting message after a period
+// of time
+// Possible Cause: The attacker delay the message by
+// delete the message and repeat it after a period of time
+//
+//
+// Design item 2:
+// 2. When an authorised Cardiologist or Clinical Assistant switch on/off,
+// ICD software must be set as on/off mode.
+//
+//
+// Guide Word - LATE
+// Deviation: The ICD receives the ModeOn/Off message after a period
+// of time
+// Possible Cause: The attacker delay the message by
+// delete the message and repeat it after a period of time
+//
+//
+
+
