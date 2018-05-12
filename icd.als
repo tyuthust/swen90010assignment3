@@ -117,7 +117,7 @@ pred send_mode_on[s, s' : State] {
 // from Off to On and the message to be removed from the network
 // Precondition: the network now contains a ModeOn message from the authorised 
 //               cardiologist
-//               last_action is SendModeOn for the message's sender
+//               --last_action is SendModeOn for the message's sender--
 //               the current icd_mode and impulse_mode is Modeoff
 // Postcondition: the current icd_mode and impulse_mode is set as ModeOn
 //                last_action in RecvModeOn and 
@@ -167,13 +167,13 @@ pred send_change_settings[s, s' : State] {
 // Precondition: the current icd_mode and impulse_mode is set as ModeOff
 //               the network now contains a ChangeSettings message from the authorised 
 //               cardiologist
-//               last_action SendChangeSettings
+//               --last_action SendChangeSettings--
 // Postcondition: joules to deliver is set as the given value
 //                last_action in RecvChangeSettings and
 //                last_action.who = the source of the ChangeSettingsMessage
 //                and nothing else changes
 pred recv_change_settings[s, s' : State] {
-  s.last_action = SendChangeSettings and
+  //s.last_action = SendChangeSettings and
   s.icd_mode in ModeOff and 
   s.impulse_mode in ModeOff and
   s.network in ChangeSettingsMessage and
@@ -199,22 +199,17 @@ pred recv_change_settings[s, s' : State] {
 // When doing so, ensure you update the following line that describes the
 // attacker's abilities.
 //
-// Attacker's abilities: alter the contents of messages on the network
-//                       can impersonate the authorised cardiologist and
-//                       sending a new message whose source field names the authorised cardiologist
-//                       
+// Attacker's abilities: delete the message network the network
+//                       alter the source of messages on the network
+//                       alter the joules_to_deliver of the message on th network                   
 // Precondition: none
 // Postcondition: network state changes in accordance with attacker's abilities
 //                last_action is AttackerAction
 //                and nothing else changes
 pred attacker_action[s, s' : State] {
-  ((some m:Message | m.source = s.authorised_card and 
-  m.source.roles in Cardiologist and
-  s'.network = s.network + m) or 
-  (some j:Joules | s.network.joules_to_deliver = j and 
-  s'.network =s.network) or 
-  (some p:Patient | s.network.source.roles = p and 
-  s'.network = s.network)) and
+  some s.network and
+  (s'.network.source = s.network.source and 
+  s'.network.joules_to_deliver in (Joules  - InitialJoulesToDeliver)) and
   s'.icd_mode = s.icd_mode and
   s'.joules_to_deliver = s.joules_to_deliver and
   s'.impulse_mode = s.impulse_mode and
@@ -223,6 +218,21 @@ pred attacker_action[s, s' : State] {
   s'.last_action.who = s.network.source
 }
 
+
+// pred attacker_action[s, s' : State] {
+//   some s.network and
+//   ((no s'.network) or 
+//   (s.network in ChangeSettingsMessage and
+//    s'.network.source = s.network.source and 
+//   s'.network.joules_to_deliver in (Joules - InitialJoulesToDeliver)) or
+//   (s'.network = s.network and s'.network.source in (Principal-s.network.source))) and
+//   s'.icd_mode = s.icd_mode and
+//   s'.joules_to_deliver = s.joules_to_deliver and
+//   s'.impulse_mode = s.impulse_mode and
+//   s'.authorised_card = s.authorised_card and
+//   s'.last_action = AttackerAction and
+//   s'.last_action.who = s.network.source
+// }
 
 // =========================== State Transitions and Traces ==================
 
@@ -254,8 +264,9 @@ fact init_state {
   }
 }
 
-run { last.icd_mode=ModeOn} for exactly 8 State, 2 Joules, 4 Action, 1 Principal, 2 Message
-// run { last.last_action=RecvChangeSettings} for exactly 5 State, 2 Joules, 4 Action, 1 Principal, 2 Message
+// run { last.icd_mode=ModeOn} for exactly 8 State, 2 Joules, 4 Action, 1 Principal, 2 Message
+run { last.last_action=RecvChangeSettings} for exactly 7 State, 3 Joules, 4 Action, 2 Principal, 2 Message
+// run { last.last_action=AttackerAction} for exactly 5 State, 3 Joules, 4 Action, 2 Principal, 2 Message
 
 // =========================== Properties ====================================
 
