@@ -207,9 +207,7 @@ pred recv_change_settings[s, s' : State] {
 //                last_action is AttackerAction
 //                and nothing else changes
 pred attacker_action[s, s' : State] {
-  some s.network and
-  (s'.network.source = s.network.source and 
-  s'.network.joules_to_deliver in (Joules  - InitialJoulesToDeliver)) and
+  ((one s.network and no s'.network) or (s.network in ChangeSettingsMessage and s'.network.source = s.network.source) or (s.network in ModeOnMessage)) and
   s'.icd_mode = s.icd_mode and
   s'.joules_to_deliver = s.joules_to_deliver and
   s'.impulse_mode = s.impulse_mode and
@@ -218,21 +216,6 @@ pred attacker_action[s, s' : State] {
   s'.last_action.who = s.network.source
 }
 
-
-// pred attacker_action[s, s' : State] {
-//   some s.network and
-//   ((no s'.network) or 
-//   (s.network in ChangeSettingsMessage and
-//    s'.network.source = s.network.source and 
-//   s'.network.joules_to_deliver in (Joules - InitialJoulesToDeliver)) or
-//   (s'.network = s.network and s'.network.source in (Principal-s.network.source))) and
-//   s'.icd_mode = s.icd_mode and
-//   s'.joules_to_deliver = s.joules_to_deliver and
-//   s'.impulse_mode = s.impulse_mode and
-//   s'.authorised_card = s.authorised_card and
-//   s'.last_action = AttackerAction and
-//   s'.last_action.who = s.network.source
-// }
 
 // =========================== State Transitions and Traces ==================
 
@@ -265,7 +248,7 @@ fact init_state {
 }
 
 // run { last.icd_mode=ModeOn} for exactly 8 State, 2 Joules, 4 Action, 1 Principal, 2 Message
-run { last.last_action=RecvChangeSettings} for exactly 7 State, 3 Joules, 4 Action, 2 Principal, 2 Message
+run { last.last_action=RecvChangeSettings} for exactly 7 State, 2 Joules, 4 Action, 2 Principal, 2 Message
 // run { last.last_action=AttackerAction} for exactly 5 State, 3 Joules, 4 Action, 2 Principal, 2 Message
 
 // =========================== Properties ====================================
