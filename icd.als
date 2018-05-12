@@ -207,7 +207,7 @@ pred recv_change_settings[s, s' : State] {
 //                last_action is AttackerAction
 //                and nothing else changes
 pred attacker_action[s, s' : State] {
-  ((one s.network and no s'.network) or (s.network in ChangeSettingsMessage and s'.network.source = s.network.source) or (s.network in ModeOnMessage)) and
+  ((one s.network and no s'.network) or (s.network in ChangeSettingsMessage and s'.network.source = s.network.source)) and
   s'.icd_mode = s.icd_mode and
   s'.joules_to_deliver = s.joules_to_deliver and
   s'.impulse_mode = s.impulse_mode and
